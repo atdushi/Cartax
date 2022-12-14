@@ -5,9 +5,11 @@
 
 ![Таблица](images/table.png)
 
+Необходимо сделать некоторую аналитику поездок.
+
+## Цели проекта и описание бизнес-задачи с требованиями
 Необходимо, используя таблицу поездок для каждого дня рассчитать процент поездок по количеству человек в машине (без пассажиров, 1, 2, 3, 4 и более пассажиров). Также добавить столбцы к предыдущим результатам с самой дорогой и самой дешевой поездкой для каждой группы.
 
-## Цели проекта с описание бизнес-задачи с требованиями
 По итогу должна получиться таблица (parquet) с колонками date, percentage_zero, percentage_1p, percentage_2p, percentage_3p, percentage_4p_plus. Технологический стек – sql, scala (что-то одно).
 
 **Дополнительно**: также провести аналитику и построить график на тему “как пройденное расстояние и количество пассажиров влияет на чаевые” в любом удобном инструменте.
@@ -46,13 +48,14 @@ spark-submit
 ```bash
 .
 ├── analysis                   # Jupyter notebook analysis
-├── docs                       # Documentation files, presentations
 ├── build                      # Compiled files, jars
-├── src                        # Source files
 ├── data                       # Data files
+├── docs                       # Documentation files, presentations
 ├── images                     # Screenshots
+├── src                        # Source files
 └── README.md
 ```
+В папке data лежит parquet файл с результатом обработки файла [yellow_tripdata_2020-01.csv](https://disk.yandex.ru/d/DKeoopbGH1Ttuw)
 
 ## Выводы
 На основании графиков можно сделать следующие выводы:
