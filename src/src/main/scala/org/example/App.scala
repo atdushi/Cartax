@@ -1,6 +1,6 @@
 package org.example
 
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
@@ -19,6 +19,8 @@ object App {
 
     df = load(df, args.apply(1));
 
+    df.printSchema()
+
     df.show()
   }
 
@@ -29,7 +31,7 @@ object App {
       .getOrCreate()
 
     // чтобы сильно не флудил
-    //    spark.sparkContext.setLogLevel("ERROR")
+    spark.sparkContext.setLogLevel("ERROR")
 
     // для парсинга даты
     spark.sql("set spark.sql.legacy.timeParserPolicy=LEGACY")
@@ -145,7 +147,7 @@ object App {
         coalesce(col("df4.min_total_amount"), lit("0.0")).alias("4p_plus_min_total_amount")
       )
 
-    df_all.write.parquet(path)
+    df_all.write.mode(SaveMode.Overwrite).parquet(path)
 
     df_all
   }

@@ -52,7 +52,16 @@ spark-submit
 ├── src                        # Source files
 └── README.md
 ```
+
 В папке data лежит parquet файл с результатом обработки файла [yellow_tripdata_2020-01.csv](https://disk.yandex.ru/d/DKeoopbGH1Ttuw)
+
+<details>
+  <summary>Пример результата обработки</summary>
+
+![График1](images/result1.png)![График2](images/result2.png)
+
+</details>
+
 
 ## Выводы
 На основании графиков можно сделать следующие выводы:
