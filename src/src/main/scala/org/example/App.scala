@@ -30,10 +30,10 @@ object App {
       .appName("Task5")
       .getOrCreate()
 
-    // чтобы сильно не флудил
+    // not to flood too much
     spark.sparkContext.setLogLevel("ERROR")
 
-    // для парсинга даты
+    // for date parsing
     spark.sql("set spark.sql.legacy.timeParserPolicy=LEGACY")
 
     spark
@@ -73,21 +73,21 @@ object App {
   }
 
   private def cleansing(df: DataFrame): DataFrame = {
-    // удалим отрицательную стоимость поездки
-    // и неизвестное кол-ов пассажиров
+    // remove the negative cost of the trip
+    // and unknown number of passengers
     df
       .filter(col("total_amount") >= 0)
       .filter(col("passenger_count").isNotNull)
   }
 
   private def enrich(df: DataFrame): DataFrame = {
-    // добавим общее число поездок за дату
+    // add the total number of trips for the date
     df.withColumn("date", to_date(col("tpep_pickup_datetime"), "yyyy-MM-dd"))
       .withColumn("trip_count", count(col("date")).over(Window.partitionBy("date")))
   }
 
   private def load(df: DataFrame, path: String): DataFrame = {
-    // вспомогательный датасет сгруппированный по датам и кол-ву пассажиров
+    // auxiliary dataset grouped by dates and number of passengers
     val df_aux = df.groupBy("date", "passenger_count").agg(
       count("passenger_count").as("count"),
       first("trip_count").as("trip_count"),
