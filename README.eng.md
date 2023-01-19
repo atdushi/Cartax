@@ -1,4 +1,4 @@
-# Clients and accounts
+# Taxi service
 
 ## Description of the project with requirements
 There is a table consisting of taxi rides in New York.
