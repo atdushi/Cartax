@@ -9,7 +9,8 @@ object App {
   def main(args: Array[String]): Unit = {
     val spark = init()
 
-    var df = extract(spark, args.apply(0))
+    //    var df = extract(spark, args.apply(0))
+    var df = extract(spark, "/tmp/taxi_service/head.csv")
 
     df.printSchema()
 
@@ -17,7 +18,8 @@ object App {
 
     df = enrich(df)
 
-    df = load(df, args.apply(1));
+    //    df = load(df, args.apply(1));
+    df = load(df, "/tmp/taxi_service/result");
 
     df.printSchema()
 

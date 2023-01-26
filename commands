@@ -1,0 +1,43 @@
+Билдим образ:
+docker build -f ./docker/Dockerfile -t izair/taxi_service:1.0.5 .
+docker push izair/taxi_service:1.0.5
+
+Заранее пулим:
+minikube ssh docker pull izair/taxi_service:1.0.5
+
+Монтируем папку на minikube:
+minikube mount /source_path:/tmp/taxi_service
+
+Проверим, что она там есть:
+minikube ssh
+ls /tmp/taxi_service
+exit
+
+Потом смонтированную папку смонтируем на POD:
+export VOLUME_TYPE=hostPath
+export VOLUME_NAME=demo-host-mount
+export MOUNT_PATH=/tmp/taxi_service
+
+Открываем порт 8001:
+kubectl proxy
+
+spark-submit \
+  --master=k8s://http://127.0.0.1:8001 \
+  --deploy-mode cluster \
+  --name taxi_service \
+  --class org.example.App \
+  --conf "spark.kubernetes.container.image=izair/taxi_service:1.0.5" \
+  --conf spark.kubernetes.driver.volumes.$VOLUME_TYPE.$VOLUME_NAME.mount.path=$MOUNT_PATH \
+  --conf spark.kubernetes.driver.volumes.$VOLUME_TYPE.$VOLUME_NAME.options.path=$MOUNT_PATH \
+  --conf spark.kubernetes.executor.volumes.$VOLUME_TYPE.$VOLUME_NAME.mount.path=$MOUNT_PATH \
+  --conf spark.kubernetes.executor.volumes.$VOLUME_TYPE.$VOLUME_NAME.options.path=$MOUNT_PATH \
+  --conf spark.executor.instances=1 \
+  --conf spark.driver.memory=512m \
+  --conf spark.executor.memory=512m \
+  --conf spark.driver.cores=1 \
+  --conf spark.executor.cores=1 \
+  --conf spark.kubernetes.namespace=default \
+  local:///opt/taxi_service-1.0-jar-with-dependencies.jar
+
+Смотрим логи:
+minikube dashboard

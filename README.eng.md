@@ -12,48 +12,88 @@ The result should be a table (parquet) with columns date, percentage_zero, perce
 **Optional**: also conduct analytics and build a graph on the topic “how the distance traveled and the number of passengers affect tips” in any convenient tool.
 
 ## Implementation plan
-Install Ubuntu 22.04 LTS locally or in a virtual machine.
 
-Install Apache Spark 3.3.1 there.
+## Technologies used
+Technology stack - Apache Spark, Scala, Kubernetes.
 
-Implement loading, transforming and unloading data in Apache Spark on Scala.
-
-## Technologies used with rationale
-Technology stack - Apache Spark, Scala.
+Kubernetes - production-grade container orchestration.
 
 Spark is the ultimate data transformation tool. It can load a csv file and export the result to parquet.
 
 Scala is good because it is a typed language. Many syntax errors will be revealed at the compilation stage.
 
-It was decided to use a regular file system as the file system. There is no point in using a data lake like HDFS because there is no continuous stream of files. The task is to download a single file that contains data for a whole year.
+It was decided to use a regular file system as the file system.
 
-## Schemes/architectures with justification
-The architecture is quite simple: the csv file is placed somewhere in a local folder. From there, Spark takes it and after some transformation puts the parquet files back into the local folder. Paths to csv file and parquet file are passed as parameters to this program.
+## Schema
+A CSV file is placed somewhere in a local folder. This folder is mounted in Kubernetes. From there, Spark takes it and after some transformation puts the parquet files back into this folder.
 
 ![Diagram](images/diagram.drawio.png)
 
-Call example:
-```
-spark-submit 
-    --class org.example.App 
-    ./task5_2.12-0.1.0.jar /home/user/yellow_tripdata_2020-01.csv /home/user/results.parquet
-```
+### Setup and launch
 
+[Article](https://jaceklaskowski.github.io/spark-kubernetes-book/demo/spark-and-local-filesystem-in-minikube/) shows how to set up a Spark application on minikube to access files on a local filesystem.
+
+minikube version: v1.28.0
+
+<details>
+  <summary>Example</summary>
+
+```
+minikube start
+
+docker build -f ./docker/Dockerfile -t izair/taxi_service:1.0.5 .
+docker push izair/taxi_service:1.0.5
+
+minikube ssh docker pull izair/taxi_service:1.0.5
+
+minikube mount /source_path:/tmp/taxi_service
+
+minikube ssh
+ls /tmp/taxi_service
+exit
+
+export VOLUME_TYPE=hostPath
+export VOLUME_NAME=demo-host-mount
+export MOUNT_PATH=/tmp/taxi_service
+
+kubectl proxy
+
+spark-submit \
+  --master=k8s://http://127.0.0.1:8001 \
+  --deploy-mode cluster \
+  --name taxi_service \
+  --class org.example.App \
+  --conf "spark.kubernetes.container.image=izair/taxi_service:1.0.5" \
+  --conf spark.kubernetes.driver.volumes.$VOLUME_TYPE.$VOLUME_NAME.mount.path=$MOUNT_PATH \
+  --conf spark.kubernetes.driver.volumes.$VOLUME_TYPE.$VOLUME_NAME.options.path=$MOUNT_PATH \
+  --conf spark.kubernetes.executor.volumes.$VOLUME_TYPE.$VOLUME_NAME.mount.path=$MOUNT_PATH \
+  --conf spark.kubernetes.executor.volumes.$VOLUME_TYPE.$VOLUME_NAME.options.path=$MOUNT_PATH \
+  --conf spark.executor.instances=1 \
+  --conf spark.driver.memory=512m \
+  --conf spark.executor.memory=512m \
+  --conf spark.driver.cores=1 \
+  --conf spark.executor.cores=1 \
+  --conf spark.kubernetes.namespace=default \
+  local:///opt/taxi_service-1.0-jar-with-dependencies.jar
+
+minikube dashboard
+```
+</details>
 
 ## Development results
 As a result, a project was created with the following structure:
 ```bash
 .
-├── analysis                   # Jupyter notebook analysis
-├── build                      # Compiled files, jars
-├── data                       # Data files
-├── docs                       # Documentation files, presentations
-├── images                     # Screenshots
-├── src                        # Source files
+├── analysis                   # jupyter notebook analysis
+├── data                       # data files
+├── docker                     # docker files
+├── docs                       # documentation
+├── images                     # screenshots
+├── src                        # source files
 └── README.md
 ```
 
-The data folder contains a parquet file with the result of processing the file [yellow_tripdata_2020-01.csv](https://disk.yandex.ru/d/DKeoopbGH1Ttuw)
+The data folder contains the head.csv file with the first few lines from [yellow_tripdata_2020-01.csv](https://disk.yandex.ru/d/DKeoopbGH1Ttuw) and the parquet file with the result of its processing.
 
 <details>
   <summary>Processing result example</summary>

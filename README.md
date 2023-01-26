@@ -12,48 +12,96 @@
 **Дополнительно**: также провести аналитику и построить график на тему “как пройденное расстояние и количество пассажиров влияет на чаевые” в любом удобном инструменте.
 
 ## План реализации
-Установить Ubuntu 22.04 LTS локально или на виртуальную машину.
 
-Установить туда Apache Spark 3.3.1.
+### Используемые технологии
+Технологический стек – Apache Spark, Scala, Kubernetes.
 
-Реализовать загрузку, трансформацию и выгрузку данных в Apache Spark на Scala.
+Kubernetes - оркестратор контейнеров промышленного уровня.
 
-## Используемые технологии с обоснованием
-Технологический стек – Apache Spark, Scala. 
-
-Spark - самый главный инструмент для трансформации данных. Он может загрузить csv файл и выгрузить результат в parquet. 
+Spark - самый главный инструмент для трансформации данных. Он легко может загрузить csv файл и выгрузить результат в parquet.
 
 Scala хороша тем, что это типизированный язык. Много синтаксических ошибок будет выявлено ещё на этапе компиляции.
 
-В качестве файловой системы принято решение использовать обычную файловую систему. Нет смысла использовать озеро данных типа HDFS, потому что нет какого-то непрерывного потока файлов. Стоит задача загрузки одиного файла, который содержит в себе данные за целый год.
+В качестве файловой системы используется обычная файловая система хостовой машины.
 
-## Схемы/архитектуры с обоснованием
-Архитектура довольно простая: csv файл кладется куда-то в локальную папку. Оттуда его берет Spark и после некоторых трансформаций кладет parquet файлы обратно в локальную папку. Пути к csv файлу и parquet файлу передаются как параметры этой программе.
+### Схема
+
+CSV файл кладется куда-то в локальную папку. Эта папка монтируется в Kubernetes. Оттуда его берет Spark и после некоторых трансформаций кладет parquet файлы обратно в эту папку.
 
 ![График](images/diagram.drawio.png)
 
-Пример вызова:
-```
-spark-submit 
-    --class org.example.App 
-    ./task5_2.12-0.1.0.jar /home/user/yellow_tripdata_2020-01.csv /home/user/results.parquet
-```
+### Настройка и запуск
 
+[Статья](https://jaceklaskowski.github.io/spark-kubernetes-book/demo/spark-and-local-filesystem-in-minikube/) о том как монтировать локальную папку в Kubernetes.
+
+minikube version: v1.28.0
+
+<details>
+  <summary>Пример</summary>
+
+```
+minikube start
+
+# Билдим образ:
+docker build -f ./docker/Dockerfile -t izair/taxi_service:1.0.5 .
+docker push izair/taxi_service:1.0.5
+
+# Заранее пулим:
+minikube ssh docker pull izair/taxi_service:1.0.5
+
+# Монтируем папку на minikube:
+minikube mount /source_path:/tmp/taxi_service
+
+# Проверим, что она там есть:
+minikube ssh
+ls /tmp/taxi_service
+exit
+
+# Потом смонтированную папку смонтируем на POD:
+export VOLUME_TYPE=hostPath
+export VOLUME_NAME=demo-host-mount
+export MOUNT_PATH=/tmp/taxi_service
+
+# Открываем порт 8001:
+kubectl proxy
+
+spark-submit \
+  --master=k8s://http://127.0.0.1:8001 \
+  --deploy-mode cluster \
+  --name taxi_service \
+  --class org.example.App \
+  --conf "spark.kubernetes.container.image=izair/taxi_service:1.0.5" \
+  --conf spark.kubernetes.driver.volumes.$VOLUME_TYPE.$VOLUME_NAME.mount.path=$MOUNT_PATH \
+  --conf spark.kubernetes.driver.volumes.$VOLUME_TYPE.$VOLUME_NAME.options.path=$MOUNT_PATH \
+  --conf spark.kubernetes.executor.volumes.$VOLUME_TYPE.$VOLUME_NAME.mount.path=$MOUNT_PATH \
+  --conf spark.kubernetes.executor.volumes.$VOLUME_TYPE.$VOLUME_NAME.options.path=$MOUNT_PATH \
+  --conf spark.executor.instances=1 \
+  --conf spark.driver.memory=512m \
+  --conf spark.executor.memory=512m \
+  --conf spark.driver.cores=1 \
+  --conf spark.executor.cores=1 \
+  --conf spark.kubernetes.namespace=default \
+  local:///opt/taxi_service-1.0-jar-with-dependencies.jar
+
+# Смотрим логи:
+minikube dashboard
+```
+</details>
 
 ## Результаты разработки
 В результате был создан проект со следующей структурой:
 ```bash
 .
-├── analysis                   # Jupyter notebook analysis
-├── build                      # Compiled files, jars
-├── data                       # Data files
-├── docs                       # Documentation files, presentations
-├── images                     # Screenshots
-├── src                        # Source files
+├── analysis                   # jupyter notebook analysis
+├── data                       # data files
+├── docker                     # docker files
+├── docs                       # documentation
+├── images                     # screenshots
+├── src                        # source files
 └── README.md
 ```
 
-В папке data лежит parquet файл с результатом обработки файла [yellow_tripdata_2020-01.csv](https://disk.yandex.ru/d/DKeoopbGH1Ttuw)
+В папке data лежит файл head.csv с первыми несколькими  строками из [yellow_tripdata_2020-01.csv](https://disk.yandex.ru/d/DKeoopbGH1Ttuw) и parquet файл с результатом его обработки.
 
 <details>
   <summary>Пример результата обработки</summary>
