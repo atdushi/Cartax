@@ -38,7 +38,7 @@ minikube version: v1.28.0
 <details>
   <summary>Example</summary>
 
-```
+```bash
 minikube start
 
 docker build -f ./docker/Dockerfile -t izair/taxi_service:1.0.5 .

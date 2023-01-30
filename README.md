@@ -39,7 +39,7 @@ minikube version: v1.28.0
 <details>
   <summary>Пример</summary>
 
-```
+```bash
 minikube start
 
 # Билдим образ:
