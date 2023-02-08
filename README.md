@@ -46,7 +46,7 @@ minikube version: v1.28.0
   <summary>Пример</summary>
 
 ```bash
-minikube start
+minikube start --driver=kvm2
 
 # Билдим образ:
 docker build -f ./docker/Dockerfile -t izair/taxi_service:1.0.5 .

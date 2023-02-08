@@ -39,7 +39,7 @@ minikube version: v1.28.0
   <summary>Example</summary>
 
 ```bash
-minikube start
+minikube start --driver=kvm2
 
 docker build -f ./docker/Dockerfile -t izair/taxi_service:1.0.5 .
 docker push izair/taxi_service:1.0.5
