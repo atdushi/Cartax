@@ -19,7 +19,9 @@ object App {
     df = enrich(df)
 
     //    df = load(df, args.apply(1));
-    df = load(df, "/tmp/taxi_service/result");
+    df = load(df);
+
+    df.write.mode(SaveMode.Overwrite).parquet("/tmp/taxi_service/result")
 
     df.printSchema()
 
@@ -41,7 +43,7 @@ object App {
     spark
   }
 
-  private def extract(spark: SparkSession, path: String): DataFrame = {
+  def extract(spark: SparkSession, path: String): DataFrame = {
     val schema =
       StructType(
         Array(
@@ -74,7 +76,7 @@ object App {
     df
   }
 
-  private def cleansing(df: DataFrame): DataFrame = {
+  def cleansing(df: DataFrame): DataFrame = {
     // remove the negative cost of the trip
     // and unknown number of passengers
     df
@@ -82,13 +84,13 @@ object App {
       .filter(col("passenger_count").isNotNull)
   }
 
-  private def enrich(df: DataFrame): DataFrame = {
+  def enrich(df: DataFrame): DataFrame = {
     // add the total number of trips for the date
     df.withColumn("date", to_date(col("tpep_pickup_datetime"), "yyyy-MM-dd"))
       .withColumn("trip_count", count(col("date")).over(Window.partitionBy("date")))
   }
 
-  private def load(df: DataFrame, path: String): DataFrame = {
+  def load(df: DataFrame): DataFrame = {
     // auxiliary dataset grouped by dates and number of passengers
     val df_aux = df.groupBy("date", "passenger_count").agg(
       count("passenger_count").as("count"),
@@ -148,8 +150,6 @@ object App {
         coalesce(col("df4.max_total_amount"), lit("0.0")).alias("4p_plus_max_total_amount"),
         coalesce(col("df4.min_total_amount"), lit("0.0")).alias("4p_plus_min_total_amount")
       )
-
-    df_all.write.mode(SaveMode.Overwrite).parquet(path)
 
     df_all
   }
