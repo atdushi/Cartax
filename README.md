@@ -20,7 +20,7 @@
 ## План реализации
 
 ### Используемые технологии
-Технологический стек – Apache Spark, Scala, Kubernetes.
+Технологический стек – Apache Spark 3.3.1, Scala 12, Kubernetes (Minikube 1.28.0).
 
 Kubernetes - оркестратор контейнеров промышленного уровня.
 

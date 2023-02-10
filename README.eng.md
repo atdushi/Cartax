@@ -1,5 +1,11 @@
 # Taxi service
 
+<div align="center">
+
+![Cartax](images/logo.png)
+
+</div>
+
 ## Description of the project with requirements
 There is a table consisting of taxi rides in New York.
 
@@ -14,7 +20,7 @@ The result should be a table (parquet) with columns date, percentage_zero, perce
 ## Implementation plan
 
 ## Technologies used
-Technology stack - Apache Spark, Scala, Kubernetes.
+Technology stack - Apache Spark 3.3.1, Scala 12, Kubernetes (Minikube 1.28.0).
 
 Kubernetes - production-grade container orchestration.
 
