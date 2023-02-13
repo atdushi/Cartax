@@ -28,5 +28,4 @@ jobs:
         distribution: 'temurin'
         cache: 'sbt'
     - name: Run tests
-      working-directory: ./spark
       run: sbt test
